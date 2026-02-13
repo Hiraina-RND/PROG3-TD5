@@ -8,5 +8,7 @@ public class Main {
         System.out.println(ingredientOne.getStockValueAt(instant));
         System.out.println("===============");
         System.out.println(dataRetriever.getStockValueAt(instant, 1));
+        System.out.println("===============");
+        System.out.println(dataRetriever.getDishCost(1));
     }
 }

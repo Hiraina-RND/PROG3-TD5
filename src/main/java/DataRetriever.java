@@ -43,9 +43,37 @@ public class DataRetriever {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error executiong query", e);
+            throw new RuntimeException("Error executing query", e);
         }
         return findedStockValue;
+    }
+
+    Double getDishCost(Integer dishId) {
+        DBConnection dbConnection = new DBConnection();
+        String sql = """
+                SELECT
+                    SUM(di.required_quantity * i.price) AS dish_cost
+                FROM dish_ingredient di
+                JOIN ingredient i ON i.id = di.id_ingredient
+                WHERE di.id_dish = ?;
+                """;
+        Double result = 0.0;
+
+        try (
+                Connection connection = dbConnection.getConnection();
+                PreparedStatement ps = connection.prepareStatement(sql)
+        ){
+            ps.setInt(1, dishId);
+
+            try (ResultSet resultSet = ps.executeQuery()){
+                while (resultSet.next()){
+                    result = resultSet.getDouble("dish_cost");
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error executing query", e);
+        }
+        return result;
     }
 
     Order findOrderByReference(String reference) {
