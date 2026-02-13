@@ -76,6 +76,36 @@ public class DataRetriever {
         return result;
     }
 
+    Double getGrossMargin (Integer dishId) {
+        DBConnection dbConnection = new DBConnection();
+        String sql = """
+                SELECT
+                    (d.selling_price - SUM(di.required_quantity * i.price)) AS dish_cross_margin
+                FROM dish_ingredient di
+                JOIN ingredient i ON i.id = di.id_ingredient
+                JOIN dish d on d.id = di.id_dish
+                WHERE d.id = ?
+                GROUP BY d.selling_price;
+                """;
+        Double result = 0.0;
+
+        try (
+                Connection connection = dbConnection.getConnection();
+                PreparedStatement ps = connection.prepareStatement(sql)
+        ) {
+            ps.setInt(1, dishId);
+
+            try (ResultSet resultSet = ps.executeQuery()) {
+                while(resultSet.next()) {
+                    result = resultSet.getDouble("dish_cross_margin");
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error executing query", e);
+        }
+        return result;
+    }
+
     Order findOrderByReference(String reference) {
         DBConnection dbConnection = new DBConnection();
         try (Connection connection = dbConnection.getConnection()) {
