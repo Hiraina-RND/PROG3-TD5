@@ -25,4 +25,13 @@ public class StockValue {
                 ", unit=" + unit +
                 '}';
     }
+
+    public StockValue(Double quantity, Unit unit) {
+        this.quantity = quantity;
+        this.unit = unit;
+    }
+
+    public StockValue() {
+
+    }
 }

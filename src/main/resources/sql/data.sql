@@ -43,3 +43,22 @@ values (1, 1, 1, 0.2, 'KG'),
        (3, 2, 3, 1.0, 'KG'),
        (4, 4, 4, 0.3, 'KG'),
        (5, 4, 5, 0.2, 'KG');
+
+SELECT
+    i.id,
+    DATE_TRUNC(?, sm.creation_datetime) AS period,
+    SUM(
+        CASE
+            WHEN sm.type = 'IN' THEN sm.quantity
+            ELSE -sm.quantity
+        END
+    ) OVER (
+        PARTITION BY i.id
+        ORDER BY DATE_TRUNC(?, sm.creation_datetime)
+    ) AS stock_at_period
+FROM stock_movement sm
+JOIN ingredient i
+    ON i.id = sm.id_ingredient
+WHERE sm.creation_datetime BETWEEN ?
+                               AND ?
+ORDER BY i.id, period;

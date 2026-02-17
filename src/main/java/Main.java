@@ -1,4 +1,5 @@
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 public class Main {
     public static void main(String[] args) {
@@ -16,5 +17,10 @@ public class Main {
         System.out.println("Dish_cross_margin from Dish class: " + dataRetriever.findDishById(1).getGrossMargin());
         System.out.println("===============");
         System.out.println("Dish_cross_margin from dataRetriever: " + dataRetriever.getGrossMargin(1));
+
+        LocalDateTime start = LocalDateTime.of(2024, 01, 04, 8, 00);
+        LocalDateTime end = LocalDateTime.of(2024, 01, 06, 20, 00);
+
+        System.out.println(dataRetriever.getIngredientsStatsByPeriod(Periodicity.DAY, start, end));
     }
 }

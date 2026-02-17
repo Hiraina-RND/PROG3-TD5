@@ -2,6 +2,7 @@ import org.postgresql.util.PSQLException;
 
 import java.sql.*;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -104,6 +105,63 @@ public class DataRetriever {
             throw new RuntimeException("Error executing query", e);
         }
         return result;
+    }
+
+    public List<StockStat> getIngredientsStatsByPeriod(
+            Periodicity periodicity,
+            LocalDateTime intervalleMin,
+            LocalDateTime intervalleMax
+    ){
+        DBConnection dbConnection = new DBConnection();
+        String sql = """
+                SELECT
+                    i.name,
+                    DATE_TRUNC(?, sm.creation_datetime) AS periodDate,
+                    SUM(
+                        CASE
+                            WHEN sm.type = 'IN' THEN sm.quantity
+                            ELSE -sm.quantity
+                        END
+                    ) OVER (
+                        PARTITION BY i.id, sm.creation_datetime
+                        ORDER BY DATE_TRUNC(?, sm.creation_datetime)
+                    ) AS stock_at_period,
+                    sm.quantity,
+                    sm.unit
+                FROM stock_movement sm
+                JOIN ingredient i
+                    ON i.id = sm.id_ingredient
+                WHERE sm.creation_datetime BETWEEN ?
+                                               AND ?
+                ORDER BY i.id, periodDate
+                """;
+        List<StockStat> findedList = new ArrayList<>();
+
+        try (
+                Connection connection = dbConnection.getConnection();
+                PreparedStatement ps = connection.prepareStatement(sql)
+        ) {
+            ps.setString(1, periodicity.name());
+            ps.setString(2, periodicity.name());
+            ps.setTimestamp(3, Timestamp.valueOf(intervalleMin));
+            ps.setTimestamp(4, Timestamp.valueOf(intervalleMax));
+
+            try (ResultSet resultSet = ps.executeQuery()){
+                while (resultSet.next()){
+                    findedList.add(new StockStat(
+                            resultSet.getString("name"),
+                            resultSet.getTimestamp("periodDate").toLocalDateTime().toLocalDate(),
+                            new StockValue(
+                                    resultSet.getDouble("quantity"),
+                                    Unit.valueOf(resultSet.getString("unit"))
+                            )
+                    ));
+                }
+            }
+        } catch (SQLException e){
+            throw new RuntimeException("Error executing query", e);
+        }
+        return findedList;
     }
 
     Order findOrderByReference(String reference) {
